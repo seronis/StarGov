@@ -1,0 +1,2 @@
+v0.0.0
+	set up github repo with minimal mod folder contents at https://github.com/seronis/StarGov
