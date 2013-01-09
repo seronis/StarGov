@@ -1,2 +1,10 @@
 v0.0.0
 	set up github repo with minimal mod folder contents at https://github.com/seronis/StarGov
+v0.1.0
+	minimal code to support scripted governors ported from old mod
+	renovation and testing governors added
+v0.2.0
+	governors from old code imported; researching, farming, metal mining, electronics,
+		advance parts, economic and luxuries
+	govs compile clean but have not been retested
+
