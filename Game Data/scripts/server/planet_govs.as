@@ -60,6 +60,7 @@ void pushTechLvls( Empire@ emp ) {
 
 //thread lock friendly tech level assessment
 void popTechLvls( Empire@ emp, bldVals &out rlvl ) {
+	rlvl.SetAll(-1);
 	rlvl.city = max(1.00, emp.getStat(str_Sociology));
 	rlvl.farm = max(0.75, emp.getStat(str_Biology));
 	rlvl.metl = max(1.00, emp.getStat(str_Metallurgy));
@@ -155,7 +156,16 @@ class bldVals {
 		lasr = rhs;
 		peng = rhs;
 	}
-		
+
+	void print( string@ msg ) {
+		error( "---------- " + msg );
+		error( "- gcap: " + gcap + " pcap: " + pcap + " city: " + city + " farm: " + farm );
+		error( "- metl: " + metl + " elec: " + elec + " advp: " + advp + " yard: " + yard );
+		error( "- port: " + port + " crgo: " + crgo + " scif: " + scif + " bnkr: " + bnkr );
+		error( "- good: " + good + " luxr: " + luxr + " fuel: " + fuel + " ammo: " + ammo );
+		error( "- shld: " + shld + " cann: " + cann + " lasr: " + lasr + " peng: " + peng );
+		error( "- " );
+	}
 };
 
 //vanilla building definitions
@@ -241,7 +251,10 @@ void init_consts() {
 	pref_ResGenMult = getGameSetting("RES_GEN_MULT", 0.167f);
 }
 
-// Return true to prevent the rest of the build queue from executing
+// Called by the game engine from build_queues.xml
+// Return Vales:
+//		true	Prevents the rest of the build queue from executing
+//		false	rest of the build queue instructions will execute
 bool onGovEvent(Planet@ pl) {
 	string@ gov = pl.getGovernorType();
 	Empire@ emp = pl.toObject().getOwner();
@@ -661,6 +674,10 @@ bool gov_testing(Planet@ pl, Empire@ emp) {
 		fact_WorkRate
 		);
 	
+	rlvl.print( pl.toObject().getName() + ": rlvl" );
+	olvl.print( pl.toObject().getName() + ": olvl" );
+	oloc.print( pl.toObject().getName() + ": oloc" );
+	
 	State@ ore = pl.toObject().getState(strOre);
 	State@ workers = pl.toObject().getState(strWorkers);
 	emp.postMessage(
@@ -733,22 +750,31 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	uint slots_used = pl.getStructureCount();
-	uint slots_total = uint(round(pl.getMaxStructureCount()));
-	
-	if( slots_used > (slots_total-2) ) {
+	float slots_total = pl.getMaxStructureCount();
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+	emp.postMessage(
+			"#c:green#Total:#c##c:white#"+slots_total+"#c#  "
+		+	"#c:green#Used:#c##c:white#"+slots_used+"#c#  "
+		+	"#c:green#Free:#c##c:white#"+slots_free+"#c#  "
+		);
+	if( slots_free < 1 ) {
+		warning("1");
 		if( pl.getStructureCount(bld_good) > 0) {
 			pl.removeStructure(oloc.good);
 			return true;
 		}
+		warning("2");
 		if( pl.getStructureCount(bld_luxr) > 0) {
 			pl.removeStructure(oloc.luxr);
 			return true;
 		}
+		warning("3");
 		if( pl.getStructureCount(bld_scif) > 0 && pl.getStructureCount(bld_gcap) < 1 ) {
 			pl.removeStructure(oloc.scif);
 			return true;
 		}
+		warning("4");
 
 		//allowed limited number of these depending on planet size
 		uint limit = floor(slots_total / 9);
@@ -756,14 +782,17 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.crgo);
 			return true;
 		}
+		warning("5");
 		if( pl.getStructureCount(bld_ammo) > limit ) {
 			pl.removeStructure(oloc.ammo);
 			return true;
 		}
+		warning("6");
 		if( pl.getStructureCount(bld_fuel) > limit ) {
 			pl.removeStructure(oloc.fuel);
 			return true;
 		}
+		warning("7");
 
 		//By the time we're this established we should have dedicated farm worlds
 		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
@@ -775,11 +804,13 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
+		warning("8");
 		
 		if( pl.getStructureCount(bld_yard) > 0 ) {
 			pl.removeStructure(oloc.yard);
 			return true;
 		}
+		warning("9");
 
 		float num_advp = pl.getStructureCount(bld_advp);
 		float num_elec = pl.getStructureCount(bld_elec);
