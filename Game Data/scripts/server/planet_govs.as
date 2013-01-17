@@ -61,13 +61,21 @@ void pushTechLvls( Empire@ emp ) {
 //thread lock friendly tech level assessment
 void popTechLvls( Empire@ emp, bldVals &out rlvl ) {
 	rlvl.SetAll(-1);
+	rlvl.gcap = 1;
+	rlvl.pcap = 1;
 	rlvl.city = max(1.00, emp.getStat(str_Sociology));
 	rlvl.farm = max(0.75, emp.getStat(str_Biology));
 	rlvl.metl = max(1.00, emp.getStat(str_Metallurgy));
+	rlvl.elec = rlvl.metl;
+	rlvl.advp = rlvl.metl;
 	rlvl.yard = max(1.00, emp.getStat(str_ShipConstruction));
 	rlvl.port = max(1.00, emp.getStat(str_Economics));
 	rlvl.crgo = max(1.00, emp.getStat(str_Cargo));
 	rlvl.scif = max(1.00, emp.getStat(str_Science));
+	rlvl.good = rlvl.port;
+	rlvl.luxr = rlvl.port;
+	rlvl.fuel = max(1.00, emp.getStat(str_Chemistry));
+	rlvl.ammo = ceil(rlvl.crgo * 0.5);
 }
 
 const float tickPeriod = 30.0f;
@@ -453,143 +461,143 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	PlanetStructureList structlist;
 	structlist.prepare(pl);
 	const subSystemDef@ struct = null;
-	float templvl = 1000;
+	float templvl;
 	for (uint i = 0; i < structlist.getCount(); ++i) {
 		@struct = structlist.getStructure(i).get_type();
 		templvl = structlist.getStructure(i).get_level();
 
 		if(struct is bld_city) {
-			if(templvl < olvl.city) {
+			if(templvl <= olvl.city) {
 				oloc.city = i;
 				olvl.city = templvl;
 			}
 		}
 		else if(struct is bld_metl) {
-			if(templvl < olvl.metl) {
+			if(templvl <= olvl.metl) {
 				oloc.metl = i;
 				olvl.metl = templvl;
 			}
 			pop_wreq += wreq_metl * fact_PlanetSz;
 		}
 		else if(struct is bld_elec) {
-			if(templvl < olvl.elec) {
+			if(templvl <= olvl.elec) {
 				oloc.elec = i;
 				olvl.elec = templvl;
 			}
 			pop_wreq += wreq_elec * fact_PlanetSz;
 		}
 		else if(struct is bld_advp) {
-			if(templvl < olvl.advp) {
+			if(templvl <= olvl.advp) {
 				oloc.advp = i;
 				olvl.advp = templvl;
 			}
 			pop_wreq += wreq_advp * fact_PlanetSz;
 		}
 		else if(struct is bld_farm) {
-			if(templvl < olvl.farm) {
+			if(templvl <= olvl.farm) {
 				oloc.farm = i;
 				olvl.farm = templvl;
 			}
 			pop_wreq += wreq_farm * fact_PlanetSz;
 		}
 		else if(struct is bld_good) {
-			if(templvl < olvl.good) {
+			if(templvl <= olvl.good) {
 				oloc.good = i;
 				olvl.good = templvl;
 			}
 			pop_wreq += wreq_good * fact_PlanetSz;
 		}
 		else if(struct is bld_luxr) {
-			if(templvl < olvl.luxr) {
+			if(templvl <= olvl.luxr) {
 				oloc.luxr = i;
 				olvl.luxr = templvl;
 			}
 			pop_wreq += wreq_luxr * fact_PlanetSz;
 		}
 		else if(struct is bld_port) {
-			if(templvl < olvl.port) {
+			if(templvl <= olvl.port) {
 				oloc.port = i;
 				olvl.port = templvl;
 			}
 			pop_wreq += wreq_port * fact_PlanetSz;
 		}
 		else if(struct is bld_yard) {
-			if(templvl < olvl.yard) {
+			if(templvl <= olvl.yard) {
 				oloc.yard = i;
 				olvl.yard = templvl;
 			}
 			pop_wreq += wreq_yard * fact_PlanetSz;
 		}
 		else if(struct is bld_crgo) {
-			if(templvl < olvl.crgo) {
+			if(templvl <= olvl.crgo) {
 				oloc.crgo = i;
 				olvl.crgo = templvl;
 			}
 			pop_wreq += wreq_crgo * fact_PlanetSz;
 		}
 		else if(struct is bld_fuel) {
-			if(templvl < olvl.fuel) {
+			if(templvl <= olvl.fuel) {
 				oloc.fuel = i;
 				olvl.fuel = templvl;
 			}
 			pop_wreq += wreq_fuel * fact_PlanetSz;
 		}
 		else if(struct is bld_ammo) {
-			if(templvl < olvl.ammo) {
+			if(templvl <= olvl.ammo) {
 				oloc.ammo = i;
 				olvl.ammo = templvl;
 			}
 			pop_wreq += wreq_ammo * fact_PlanetSz;
 		}
 		else if(struct is bld_bnkr) {
-			if(templvl < olvl.bnkr) {
+			if(templvl <= olvl.bnkr) {
 				oloc.bnkr = i;
 				olvl.bnkr = templvl;
 			}
 		}
 		else if(struct is bld_shld) {
-			if(templvl < olvl.shld) {
+			if(templvl <= olvl.shld) {
 				oloc.shld = i;
 				olvl.shld = templvl;
 			}
 			pop_wreq += wreq_shld * fact_PlanetSz;
 		}
 		else if(struct is bld_cann) {
-			if(templvl < olvl.cann) {
+			if(templvl <= olvl.cann) {
 				oloc.cann = i;
 				olvl.cann = templvl;
 			}
 			pop_wreq += wreq_cann * fact_PlanetSz;
 		}
 		else if(struct is bld_lasr) {
-			if(templvl < olvl.lasr) {
+			if(templvl <= olvl.lasr) {
 				oloc.lasr = i;
 				olvl.lasr = templvl;
 			}
 			pop_wreq += wreq_lasr * fact_PlanetSz;
 		}
 		else if(struct is bld_peng) {
-			if(templvl < olvl.peng) {
+			if(templvl <= olvl.peng) {
 				oloc.peng = i;
 				olvl.peng = templvl;
 			}
 			pop_wreq += wreq_peng * fact_PlanetSz;
 		}
 		else if(struct is bld_scif) {
-			if(templvl < olvl.scif) {
+			if(templvl <= olvl.scif) {
 				oloc.scif = i;
 				olvl.scif = templvl;
 			}
 			pop_wreq += wreq_scif * fact_PlanetSz;
 		}
 		else if(struct is bld_gcap) {
-			if(templvl < olvl.gcap) {
+			if(templvl <= olvl.gcap) {
 				oloc.gcap = i;
 				olvl.gcap = templvl;
 			}
 		}
 		else if(struct is bld_pcap) {
-			if(templvl < olvl.pcap) {
+			if(templvl <= olvl.pcap) {
 				oloc.pcap = i;
 				olvl.pcap = templvl;
 			}
@@ -830,6 +838,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
+		warning("10");
 
 		//The two numeric constants here are to balance the total ratio of
 		//	one resource produced versus the others. Our goal is to attempt
@@ -842,6 +851,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
+		warning("11");
 		float etomratio = (rate_metl / rate_elec) * 0.275;
 		if( num_elec > 0 ) {
 			if( num_elec > etomratio * num_metl ) {
@@ -849,12 +859,14 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
+		warning("12");
 		if( num_metl > 2 ) {
 			if( (num_elec+1) <= etomratio * (num_metl-1) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
 		}
+		warning("13");
 		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
@@ -865,6 +877,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.city);
 			return true;
 		}
+		warning("14");
 
 		// Handle overworked population
 		if( pop_max < pop_wreq ) {
@@ -891,6 +904,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 		} else {
 				pl.toObject().setStateVals(strAlertWReq,0,0,0,0);
 		}
+		warning("15");
 	}
 	
 	if( offline ) {
