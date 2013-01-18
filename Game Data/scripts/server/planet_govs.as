@@ -740,6 +740,8 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
 	
+	uint gov_efficiency = 3;
+	
 	bldVals rlvl, olvl, oloc;
 
 	popTechLvls( emp, rlvl );
@@ -761,12 +763,8 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
 	float slots_free = slots_total-slots_used;
-	emp.postMessage(
-			"#c:green#Total:#c##c:white#"+slots_total+"#c#  "
-		+	"#c:green#Used:#c##c:white#"+slots_used+"#c#  "
-		+	"#c:green#Free:#c##c:white#"+slots_free+"#c#  "
-		);
-	if( slots_free < 1 ) {
+
+	if( slots_free < 2 ) {
 		warning("1");
 		if( pl.getStructureCount(bld_good) > 0) {
 			pl.removeStructure(oloc.good);
@@ -881,12 +879,12 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 
 		// Handle overworked population
 		if( pop_max < pop_wreq ) {
-			if( pl.getStructureCount(bld_farm) > 0 ) {
-				pl.removeStructure(oloc.farm);
-				return true;
-			}
 			if( pl.getStructureCount(bld_scif) > 0 ) {
 				pl.removeStructure(oloc.scif);
+				return true;
+			}
+			if( pl.getStructureCount(bld_farm) > 0 ) {
+				pl.removeStructure(oloc.farm);
 				return true;
 			}
 			//If we get to this point then the player has built too many military
@@ -917,7 +915,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -928,13 +926,13 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 
 		//we have free slots. Build something helpful to our purpose
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
 				return true;
 			}
 		}
-		if( slots_total > 12 ) {
+		if( slots_total > 14 ) {
 			if( pl.getStructureCount(bld_crgo) < 1 ) {
 				pl.buildStructure(bld_crgo);
 				return true;
@@ -976,7 +974,21 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 
 		if( num_advp > 0 ) {
 			//we only use bonus cities after at least one advp factory has been built.
-			if( uint(num_metl) > pl.getStructureCount(bld_city) ) {
+			uint desired_cities;
+			//TODO: adjust the value of this based on the gov effeciency rating
+			//			min efficiency levels already gaurented above
+			switch( gov_efficiency ){
+			case 1:
+				desired_cities = uint( (num_advp + num_elec + num_metl)/3 );	// low efficiency
+				break;
+			case 2:
+				desired_cities = uint( max( max(num_advp,num_elec),num_metl) );	// med efficiency
+				break;
+			case 3:
+				desired_cities = uint(num_advp + num_elec + num_metl);			// max efficiency
+				break;
+			}
+			if( desired_cities > pl.getStructureCount(bld_city) ) {
 				pl.buildStructure(bld_city);
 				return true;
 			}
