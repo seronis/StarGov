@@ -869,7 +869,20 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
-		if( pl.getStructureCount(bld_city) > uint(num_metl) &&
+		
+		uint desired_cities = 2;
+		switch( gov_efficiency ){
+			case 1:
+				desired_cities = uint( (num_advp + num_elec + num_metl)/3 );	// low efficiency
+				break;
+			case 2:
+				desired_cities = uint( max( max(num_advp,num_elec),num_metl) );	// med efficiency
+				break;
+			case 3:
+				desired_cities = uint(num_advp + num_elec + num_metl);			// max efficiency
+				break;
+		}
+		if( pl.getStructureCount(bld_city) > desired_cities &&
 			(pop_max - pop_city) > (pop_wreq + pop_buffer)
 			) {
 			pl.removeStructure(oloc.city);
