@@ -18,6 +18,8 @@ const string@ strHalfExports = "half_exports";
 
 const string@ strPosition = "position", strRotation = "rotation";
 
+const string@ strAlertFood = "plalert_food";
+
 const double million = 1000000.0;
 const double c_e = 2.71828183;
 
@@ -174,6 +176,16 @@ void tick(Planet@ pl, float time) {
 		if (emp.hasTraitTag(strConsumeMetals)) {
 			double consumption = 6/million * double(consumptionRate);
 			foodSupplyPct = populationConsume(pl, strMtl, consumption, time);
+		}
+		
+		if( foodSupplyPct < 0.99 ) {
+			float gt = gameTime;
+			State@ lastFoodAlert = pl.toObject().getState(strAlertFood);
+			if( gt > (lastFoodAlert.val + 30.f) ){
+				Object@ obj = pl.toObject();
+			emp.postMessage("#c:red#ALERT:#c# Governor on #link:o"+obj.uid+"##c:green#"+obj.getName()+"#c##link# reports not enough food available!");	
+				pl.toObject().setStateVals(strAlertFood,gt,0,0,0);
+			}
 		}
 	}
 	
