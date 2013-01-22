@@ -6,5 +6,7 @@ v0.1.0
 v0.2.0
 	governors from old code imported; researching, farming, metal mining, electronics,
 		advance parts, economic and luxuries
-	govs compile clean but have not been retested
+	all govs compile clean
+	econonic gov rebalanced and tested
+	clickable starvation alerts
 
