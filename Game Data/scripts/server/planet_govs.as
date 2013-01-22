@@ -765,22 +765,18 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	float slots_free = slots_total-slots_used;
 
 	if( slots_free < 2 ) {
-		warning("1");
 		if( pl.getStructureCount(bld_good) > 0) {
 			pl.removeStructure(oloc.good);
 			return true;
 		}
-		warning("2");
 		if( pl.getStructureCount(bld_luxr) > 0) {
 			pl.removeStructure(oloc.luxr);
 			return true;
 		}
-		warning("3");
 		if( pl.getStructureCount(bld_scif) > 0 && pl.getStructureCount(bld_gcap) < 1 ) {
 			pl.removeStructure(oloc.scif);
 			return true;
 		}
-		warning("4");
 
 		//allowed limited number of these depending on planet size
 		uint limit = floor(slots_total / 9);
@@ -788,17 +784,14 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.crgo);
 			return true;
 		}
-		warning("5");
 		if( pl.getStructureCount(bld_ammo) > limit ) {
 			pl.removeStructure(oloc.ammo);
 			return true;
 		}
-		warning("6");
 		if( pl.getStructureCount(bld_fuel) > limit ) {
 			pl.removeStructure(oloc.fuel);
 			return true;
 		}
-		warning("7");
 
 		//By the time we're this established we should have dedicated farm worlds
 		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
@@ -810,13 +803,11 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-		warning("8");
 		
 		if( pl.getStructureCount(bld_yard) > 0 ) {
 			pl.removeStructure(oloc.yard);
 			return true;
 		}
-		warning("9");
 
 		float num_advp = pl.getStructureCount(bld_advp);
 		float num_elec = pl.getStructureCount(bld_elec);
@@ -836,7 +827,6 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-		warning("10");
 
 		//The two numeric constants here are to balance the total ratio of
 		//	one resource produced versus the others. Our goal is to attempt
@@ -849,7 +839,6 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-		warning("11");
 		float etomratio = (rate_metl / rate_elec) * 0.275;
 		if( num_elec > 0 ) {
 			if( num_elec > etomratio * num_metl ) {
@@ -857,14 +846,12 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-		warning("12");
 		if( num_metl > 2 ) {
 			if( (num_elec+1) <= etomratio * (num_metl-1) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
 		}
-		warning("13");
 		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
@@ -888,7 +875,6 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.city);
 			return true;
 		}
-		warning("14");
 
 		// Handle overworked population
 		if( pop_max < pop_wreq ) {
@@ -915,7 +901,6 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 		} else {
 				pl.toObject().setStateVals(strAlertWReq,0,0,0,0);
 		}
-		warning("15");
 	}
 	
 	if( offline ) {
@@ -945,7 +930,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-		if( slots_total > 14 ) {
+		if( slots_total > 16 ) {
 			if( pl.getStructureCount(bld_crgo) < 1 ) {
 				pl.buildStructure(bld_crgo);
 				return true;
@@ -985,11 +970,9 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 
+		//we only use bonus cities after at least one advp factory has been built.
 		if( num_advp > 0 ) {
-			//we only use bonus cities after at least one advp factory has been built.
 			uint desired_cities;
-			//TODO: adjust the value of this based on the gov effeciency rating
-			//			min efficiency levels already gaurented above
 			switch( gov_efficiency ){
 			case 1:
 				desired_cities = uint( (num_advp + num_elec + num_metl)/3 );	// low efficiency
