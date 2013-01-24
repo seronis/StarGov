@@ -748,8 +748,6 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
 	
-	uint gov_efficiency = getEfficiency(emp);
-	
 	bldVals rlvl, olvl, oloc;
 
 	popTechLvls( emp, rlvl );
@@ -767,6 +765,8 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	State@ ore = pl.toObject().getState(strOre);
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
+	
+	uint gov_efficiency = getEfficiency(emp);
 	
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
@@ -1052,10 +1052,13 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	float slots_used = pl.getStructureCount();
+	uint gov_efficiency = getEfficiency(emp);
+	
 	float slots_total = pl.getMaxStructureCount();
-	if( slots_used > (slots_total-2) ) {
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
 
+	if( slots_free < 2 ) {
 		//strip mining worlds have no need of such things
 		if( pl.getStructureCount(bld_good) > 0 ) {
 			pl.removeStructure(oloc.good);
@@ -1179,7 +1182,7 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -1266,9 +1269,13 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	float slots_used = pl.getStructureCount();
+	uint gov_efficiency = getEfficiency(emp);
+	
 	float slots_total = pl.getMaxStructureCount();
-	if( slots_used > (slots_total-2) ) {
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+
+	if( slots_free < 2 ) {
 		float num_metl = pl.getStructureCount(bld_metl);
 
 		//we allow limited mines so that ore reserves dont go to waste
@@ -1392,7 +1399,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -1480,9 +1487,13 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	float slots_used = pl.getStructureCount();
+	uint gov_efficiency = getEfficiency(emp);
+	
 	float slots_total = pl.getMaxStructureCount();
-	if( slots_used > (slots_total-2) ) {
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+
+	if( slots_free < 2 ) {
 		float num_metl = pl.getStructureCount(bld_metl);
 
 		//we allow limited mines so that ore reserves dont go to waste
@@ -1603,7 +1614,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -1675,10 +1686,13 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	float slots_used = pl.getStructureCount();
+	uint gov_efficiency = getEfficiency(emp);
+	
 	float slots_total = pl.getMaxStructureCount();
-	if( slots_used > (slots_total-2) ) {
-		
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+
+	if( slots_free < 2 ) {
 		if( pl.getStructureCount(bld_good) > 0) {
 			pl.removeStructure(oloc.good);
 			return true;
@@ -1800,7 +1814,7 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -1900,10 +1914,13 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	float slots_used = pl.getStructureCount();
+	uint gov_efficiency = getEfficiency(emp);
+	
 	float slots_total = pl.getMaxStructureCount();
-	if( slots_used > (slots_total-2) ) {
-		
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+
+	if( slots_free < 2 ) {
 		if( pl.getStructureCount(bld_good) > 0) {
 			pl.removeStructure(oloc.good);
 			return true;
@@ -2031,7 +2048,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -2139,9 +2156,13 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 	State@ workers = pl.toObject().getState(strWorkers);
 	bool offline = (workers.val < workers.required);
 	
-	float slots_used = pl.getStructureCount();
+	uint gov_efficiency = getEfficiency(emp);
+	
 	float slots_total = pl.getMaxStructureCount();
-	if( slots_used > (slots_total-2) ) {
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+
+	if( slots_free < 2 ) {
 		float num_metl = pl.getStructureCount(bld_metl);
 		
 		//we allow limited mines so that ore reserves dont go to waste
@@ -2268,7 +2289,7 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
