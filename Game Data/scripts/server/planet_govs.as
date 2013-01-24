@@ -269,35 +269,36 @@ bool onGovEvent(Planet@ pl) {
 
 	if( @bld_gcap is null ) init_consts();
 
-	if( emp.isAI() ) {
-		//TODO: check the AI empires difficulty level and choose
-		//	a governor option reflecting that setting.
+	if( !emp.isAI() ) {
 
-		return false; //xml gov is good for weak AIs
-	}
+		if(gov == "testing")
+			return gov_testing(pl, emp);
 
-	if(gov == "testing")
-		return gov_testing(pl, emp);
+		if(gov == "rebuilder")
+			return gov_rebuilder(pl, emp);
 
-	if(gov == "rebuilder")
-		return gov_rebuilder(pl, emp);
-
-	if(gov == "resworld")
-		return gov_resworld(pl, emp);
-	if(gov == "agrarian")
-		return gov_agrarian(pl, emp);
-	if(gov == "metalworld")
-		return gov_metalworld(pl, emp);
+		if(gov == "resworld")
+			return gov_resworld(pl, emp);
+		if(gov == "agrarian")
+			return gov_agrarian(pl, emp);
+		if(gov == "metalworld")
+			return gov_metalworld(pl, emp);
+		
+		if(gov == "elecworld")
+			return gov_elecworld(pl, emp);
+		if(gov == "advpartworld")
+			return gov_advpartworld(pl, emp);
+		if(gov == "luxworld")
+			return gov_luxworld(pl, emp);
+	} else
+		if( emp.getSetting("Difficulty") == 0 )
+			return false; //trivial AIs use xml govs
+	
+	//NOTE: below this point only governors that are AI aware
 	if(gov == "economic")
 		return gov_economic(pl, emp);
-	if(gov == "elecworld")
-		return gov_elecworld(pl, emp);
-	if(gov == "advpartworld")
-		return gov_advpartworld(pl, emp);
-	if(gov == "luxworld")
-		return gov_luxworld(pl, emp);
 
-	return false;
+	return false; // default back to XML based gov when no scripted alternative available
 }
 
 
@@ -605,6 +606,13 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	}
 }
 
+int getEfficiency( Empire@ emp )
+{
+	float diff = emp.getSetting("Difficulty");
+	if( diff < 0 || diff >= 5 ) return 5;
+	return int(diff);
+}
+
 
 bool gov_rebuilder(Planet@ pl, Empire@ emp) {
 	float pop_max, pop_wreq, pop_city, pop_bnkr;
@@ -740,7 +748,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
 	
-	uint gov_efficiency = 3;
+	uint gov_efficiency = getEfficiency(emp);
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -859,13 +867,16 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 		
 		uint desired_cities = 2;
 		switch( gov_efficiency ){
+			case 0:
 			case 1:
+			case 2:
 				desired_cities = uint( (num_advp + num_elec + num_metl)/3 );	// low efficiency
 				break;
-			case 2:
+			case 3:
+			case 4:
 				desired_cities = uint( max( max(num_advp,num_elec),num_metl) );	// med efficiency
 				break;
-			case 3:
+			case 5:
 				desired_cities = uint(num_advp + num_elec + num_metl);			// max efficiency
 				break;
 		}
@@ -972,17 +983,20 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 
 		//we only use bonus cities after at least one advp factory has been built.
 		if( num_advp > 0 ) {
-			uint desired_cities;
-			switch( gov_efficiency ){
-			case 1:
-				desired_cities = uint( (num_advp + num_elec + num_metl)/3 );	// low efficiency
-				break;
-			case 2:
-				desired_cities = uint( max( max(num_advp,num_elec),num_metl) );	// med efficiency
-				break;
-			case 3:
-				desired_cities = uint(num_advp + num_elec + num_metl);			// max efficiency
-				break;
+			uint desired_cities = 2;
+			switch( gov_efficiency ) {
+				case 0:
+				case 1:
+				case 2:
+					desired_cities = uint( (num_advp + num_elec + num_metl)/3 );	// low efficiency
+					break;
+				case 3:
+				case 4:
+					desired_cities = uint( max(max(num_advp,num_elec),num_metl) );	// med efficiency
+					break;
+				case 5:
+					desired_cities = uint(num_advp + num_elec + num_metl);			// max efficiency
+					break;
 			}
 			if( desired_cities > pl.getStructureCount(bld_city) ) {
 				pl.buildStructure(bld_city);
