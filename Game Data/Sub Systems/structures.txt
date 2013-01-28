@@ -570,7 +570,7 @@ System: ShipYard
 
 	Provides: MakeAmmo with
 		Rate[Size * 2 * pow(LEVEL_GAIN_CURVE, Level)],
-		MetalCostPer[0.2*decay(Level,5)]
+		MetalCostPer[0.125]
 	
 	Provides: AmmoStorage with
 		Amount[Size * 50 * pow(LEVEL_GAIN_CURVE, Level)]
@@ -619,26 +619,27 @@ System: AmmoDepot
 	Name: #SS_AMMODEPOT_NAME
 	Description: #SS_AMMODEPOT_DESC
 
-	Available: Techs.Cargo.Level > 0
-	Level: ceil(Techs.Cargo.Level * 0.5)
+	Available: Techs.ProjWeapons.Level > 0
+	Level: Techs.ProjWeapons.Level
 	Size: Scale
-	Durability: 500 * Size * pow(LEVEL_GAIN_CURVE, Level)
-	Mass: 400 * Size * pow(LEVEL_GAIN_CURVE, Level)
+	Durability: 250 * Size * pow(LEVEL_GAIN_CURVE, Level)
+	Mass: 300 * Size * pow(COST_INC_CRV, Level)
 	
 	Tags: Structure
-	Tied To: Cargo 1
+	Tied To: ProjWeapons 1
 	
-	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[80 * Size * pow(COST_INC_CRV, Level)], AdvParts[80 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size]
+	Costs: Metals[100 * Size * pow(COST_INC_CRV, Level)], Electronics[40 * Size * pow(COST_INC_CRV, Level)], AdvParts[40 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size * pow(COST_INC_CRV, Level)]
 	Complexity: 1
 	
 	vWorkers: Size * 600000
+	vRate: Size * 10 * pow(LEVEL_GAIN_CURVE, Level)
 
 	Provides: MakeAmmo with
-		Rate[Size * 20 * pow(LEVEL_GAIN_CURVE, Level)],
-		MetalCostPer[0.2*decay(Level,5)]
+		Rate[vRate],
+		MetalCostPer[0.1]
 	
 	Provides: AmmoStorage with
-		Amount[Size * 750 * pow(LEVEL_GAIN_CURVE, Level)]
+		Amount[vRate * 10 * pow(LEVEL_GAIN_CURVE, Level)]
 	
 	Requires:
 		To Run:
