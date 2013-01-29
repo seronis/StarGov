@@ -75,7 +75,7 @@ void popTechLvls( Empire@ emp, bldVals &out rlvl ) {
 	rlvl.good = rlvl.port;
 	rlvl.luxr = rlvl.port;
 	rlvl.fuel = max(1.00, emp.getStat(str_Chemistry));
-	rlvl.ammo = ceil(rlvl.crgo * 0.5);
+	rlvl.ammo = max(1.00, emp.getStat(str_ProjWeapons));
 }
 
 const float tickPeriod = 30.0f;
@@ -314,6 +314,7 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 		float &out rate_metl, float &out rate_elec, float &out rate_advp,
 		float &out rate_food, float &out rate_good, float &out rate_luxr,
 		float &out rate_port, float &out rate_gcap, float &out rate_pcap,
+		float &out rate_fuel, float &out rate_ammo,
 		
 		bldVals &inout rlvl,	bldVals &out olvl,	bldVals &out oloc,
 
@@ -330,6 +331,8 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	float fact_PortRate = 1;
 	float fact_GoodRate = 1;
 	float fact_LuxrRate = 1;
+	float fact_FuelRate = 1;
+	float fact_AmmoRate = 1;
 	float fact_BldCosts = 1;
 	
 	float fact_BldRate  = 1;
@@ -422,6 +425,8 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	float rate_good_base = fact_PlanetSz;
 	float rate_luxr_base = fact_PlanetSz;
 	float rate_port_base = fact_PlanetSz;
+	float rate_fuel_base = fact_PlanetSz;
+	float rate_ammo_base = fact_PlanetSz;
 	
 	//tech zero base values as defined in structures.txt
 	rate_metl_base *=  140.00f;
@@ -431,6 +436,8 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	rate_good_base *=  920.00f;
 	rate_luxr_base *=   50.00f;
 	rate_port_base *=  100.00f;
+	rate_fuel_base *=  200.00f;
+	rate_ammo_base *=  100.00f;
 	
 	//adjusted values scaled to account for tech levels, preference settings and planetary conditions
 	rate_metl = rate_metl_base * (pow(lvlcurve, rlvl.metl) + basefac) * fact_MineRate * pref_ResGenMult * fact_WorkRate;
@@ -439,6 +446,8 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	rate_food = rate_food_base *  pow(lvlcurve, rlvl.farm)            * fact_FarmRate;
 	rate_good = rate_good_base *  pow(lvlcurve, rlvl.port)            * fact_GoodRate;
 	rate_luxr = rate_luxr_base *  pow(lvlcurve, rlvl.port)            * fact_LuxrRate;
+	rate_fuel = rate_fuel_base *  pow(lvlcurve, rlvl.fuel)            * fact_FuelRate;
+	rate_ammo = rate_ammo_base *  pow(lvlcurve, rlvl.ammo)            * fact_AmmoRate;
 
 	//adjustment to ore mining rate due to planetary depletion
 	State@ ore = pl.toObject().getState(strOre);
@@ -619,6 +628,7 @@ bool gov_rebuilder(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -628,6 +638,7 @@ bool gov_rebuilder(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -675,6 +686,7 @@ bool gov_testing(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -684,6 +696,7 @@ bool gov_testing(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -747,6 +760,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -756,6 +770,7 @@ bool gov_economic(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -1033,15 +1048,17 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
-
+	
 	popTechLvls( emp, rlvl );
-
+	
 	analyzePlanet( pl, emp, pop_max, pop_wreq, pop_city, pop_bnkr,
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -1057,7 +1074,7 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
 	float slots_free = slots_total-slots_used;
-
+	
 	if( slots_free < 2 ) {
 		//strip mining worlds have no need of such things
 		if( pl.getStructureCount(bld_good) > 0 ) {
@@ -1080,7 +1097,11 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.scif);
 			return true;
 		}
-
+		if( pl.getStructureCount(bld_fuel) > 0 ) {
+			pl.removeStructure(oloc.fuel);
+			return true;
+		}
+		
 		//By the time we're this established we should have dedicated farm worlds
 		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
 			double val=0, inp=0, outp=0, demand=0;
@@ -1091,29 +1112,25 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-
+		
 		//might be allowed limited number of these
-		uint limit = slots_total < 9 ? 0 : 1;
+		uint limit = slots_total < 14 ? 0 : 1;
 		if( pl.getStructureCount(bld_crgo) > 1 ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
 		}
-
-		limit = pl.getStructureCount(bld_metl)/4;
-		if( pl.getStructureCount(bld_ammo) > limit ) {
+		
+		float num_metl = pl.getStructureCount(bld_metl);
+		float num_ammo = pl.getStructureCount(bld_ammo);
+		float mtl_ammo = rate_ammo * num_ammo * 0.1;
+		
+		if( mtl_ammo > (num_metl*rate_metl) ) {
 			pl.removeStructure(oloc.ammo);
 			return true;
 		}
-		limit = slots_total / 8;
-		if( pl.getStructureCount(bld_fuel) > limit ) {
-			pl.removeStructure(oloc.fuel);
-			return true;
-		}
-
-
+		
 		float num_port = pl.getStructureCount(bld_port);
-		float num_metl = pl.getStructureCount(bld_metl);
-
+		
 		if( num_port > 1 ) {
 			float avail_export = num_port * rate_port;
 			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
@@ -1124,13 +1141,13 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-
+		
 		if( pl.getStructureCount(bld_yard) > 0 ) {
 			pl.removeStructure(oloc.yard);
 			return true;
 		}
-
-
+		
+		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -1139,19 +1156,15 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.city);
 			return true;
 		}
-
-
+		
+		
 		// Handle overworked population (maybe needs more considerations)
 		if( pop_max < pop_wreq ) {
 			if( pl.getStructureCount(bld_farm) > 0 ) {
 				pl.removeStructure(oloc.farm);
 				return true;
 			}
-			if( pl.getStructureCount(bld_fuel) > 1 ) {
-				pl.removeStructure(oloc.ammo);
-				return true;
-			}
-			if( pl.getStructureCount(bld_ammo) > 1 ) {
+			if( pl.getStructureCount(bld_ammo) > 0 ) {
 				pl.removeStructure(oloc.ammo);
 				return true;
 			}
@@ -1190,24 +1203,18 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 			pl.buildStructure(bld_city);
 			return true;
 		}
-
+		
 		//we have free slots. Build something helpful to our purpose
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
 				return true;
 			}
 		}
-		if( slots_total > 12 ) {
-			if( pl.getStructureCount(bld_crgo) < 1 ) {
-				pl.buildStructure(bld_crgo);
-				return true;
-			}
-		}
-
+		
 		float num_metl = pl.getStructureCount(bld_metl);
 		float num_port = pl.getStructureCount(bld_port);
-
+		
 		float avail_export = num_port * rate_port;
 		float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
 		total_export += (num_metl * rate_metl);
@@ -1216,7 +1223,7 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 			pl.buildStructure(bld_port);
 			return true;
 		}
-
+		
 		uint limit = pl.getStructureCount(bld_gcap) > 0 ? 2 : 1;
 		if( pl.getStructureCount(bld_farm) < limit ) {
 			double val=0, inp=0, outp=0, demand=0;
@@ -1227,12 +1234,12 @@ bool gov_metalworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-
+		
 		if( uint(num_metl) > pl.getStructureCount(bld_city)) {
 			pl.buildStructure(bld_city);
 			return true;
 		}
-
+		
 		pl.buildStructure(bld_metl);
 		return true;
 	}
@@ -1250,6 +1257,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -1259,6 +1267,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -1468,6 +1477,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -1477,6 +1487,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -1667,6 +1678,7 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -1676,6 +1688,7 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -1895,6 +1908,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -1904,6 +1918,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
@@ -2137,6 +2152,7 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 	
 	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
 	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
 
@@ -2146,6 +2162,7 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
 
 		rlvl, olvl, oloc,
 
