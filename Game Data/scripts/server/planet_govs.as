@@ -277,12 +277,8 @@ bool onGovEvent(Planet@ pl) {
 		if(gov == "rebuilder")
 			return gov_rebuilder(pl, emp);
 
-		if(gov == "resworld")
-			return gov_resworld(pl, emp);
 		if(gov == "agrarian")
 			return gov_agrarian(pl, emp);
-		if(gov == "metalworld")
-			return gov_metalworld(pl, emp);
 		
 		if(gov == "elecworld")
 			return gov_elecworld(pl, emp);
@@ -297,6 +293,10 @@ bool onGovEvent(Planet@ pl) {
 	//NOTE: below this point only governors that are AI aware
 	if(gov == "economic")
 		return gov_economic(pl, emp);
+	if(gov == "metalworld")
+		return gov_metalworld(pl, emp);
+	if(gov == "resworld")
+		return gov_resworld(pl, emp);
 
 	return false; // default back to XML based gov when no scripted alternative available
 }
@@ -1260,17 +1260,17 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
-
+	
 	popTechLvls( emp, rlvl );
-
+	
 	analyzePlanet( pl, emp, pop_max, pop_wreq, pop_city, pop_bnkr,
-
+		
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
 		rate_fuel, rate_ammo,
-
+		
 		rlvl, olvl, oloc,
-
+		
 		fact_WorkRate
 		);
 	
@@ -1283,10 +1283,10 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
 	float slots_free = slots_total-slots_used;
-
+	
 	if( slots_free < 2 ) {
 		float num_metl = pl.getStructureCount(bld_metl);
-
+		
 		//we allow limited mines so that ore reserves dont go to waste
 		if( ore.val <= 0 ) {
 			if( num_metl > 0 ) {
@@ -1294,7 +1294,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		} else {
-			if( uint(num_metl*num_metl) > uint(1 + (ore.val/5000000)) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -1325,7 +1325,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.ammo);
 			return true;
 		}
-
+		
 		//By the time we're this established we should have dedicated farm worlds
 		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
 			double val=0, inp=0, outp=0, demand=0;
@@ -1336,17 +1336,17 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-
+		
 		//might be allowed limited number of these
-		uint limit = slots_total < 9 ? 0 : 1;
+		uint limit = slots_total < 14 ? 0 : 1;
 		if( pl.getStructureCount(bld_crgo) > limit ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
 		}
-
-
+		
+		
 		float num_port = pl.getStructureCount(bld_port);
-
+		
 		if( num_port > 1 ) {
 			float avail_export = num_port * rate_port;
 			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
@@ -1357,7 +1357,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-
+		
 		if( pl.getStructureCount(bld_yard) > 0 ) {
 			pl.removeStructure(oloc.yard);
 			return true;
@@ -1373,7 +1373,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.city);
 			return true;
 		}
-
+		
 		
 		// Handle overworked population (maybe needs more considerations)
 		if( pop_max < pop_wreq ) {
@@ -1416,21 +1416,14 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 			pl.buildStructure(bld_city);
 			return true;
 		}
-
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
 				return true;
 			}
 		}
-		if( slots_total > 12 ) {
-			if( pl.getStructureCount(bld_crgo) < 1 ) {
-				pl.buildStructure(bld_crgo);
-				return true;
-			}
-		}
-
+		
 		uint limit = pl.getStructureCount(bld_gcap) > 0 ? 2 : 1;
 		if( pl.getStructureCount(bld_farm) < limit ) {
 			double val=0, inp=0, outp=0, demand=0;
@@ -1441,10 +1434,10 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		}
-
+		
 		float num_metl = pl.getStructureCount(bld_metl);
 		float num_port = pl.getStructureCount(bld_port);
-
+		
 		float avail_export = num_port * rate_port;
 		float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
 		total_export += (num_metl * rate_metl);
@@ -1453,13 +1446,15 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 			pl.buildStructure(bld_port);
 			return true;
 		}
-
-		if( ore.val > 0 && uint(num_metl) < uint(pl.getStructureCount(bld_scif)/2)
-				&& uint(num_metl*num_metl) < uint(1 + (ore.val/5000000)) ) {
+		
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor(pl.getStructureCount(bld_scif)/2)
+				&& pow(num_metl,2) < ceil(ore.val/5000000)
+				) {
 			pl.buildStructure(bld_metl);
 			return true;
 		}
-
+		
 		pl.buildStructure(bld_scif);
 		return true;
 	}
@@ -1480,17 +1475,17 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
-
+	
 	popTechLvls( emp, rlvl );
-
+	
 	analyzePlanet( pl, emp, pop_max, pop_wreq, pop_city, pop_bnkr,
-
+		
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
 		rate_fuel, rate_ammo,
-
+		
 		rlvl, olvl, oloc,
-
+		
 		fact_WorkRate
 		);
 	
@@ -1503,10 +1498,10 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
 	float slots_free = slots_total-slots_used;
-
+	
 	if( slots_free < 2 ) {
 		float num_metl = pl.getStructureCount(bld_metl);
-
+		
 		//we allow limited mines so that ore reserves dont go to waste
 		if( ore.val <= 0 ) {
 			if( num_metl > 0 ) {
@@ -1514,7 +1509,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		} else {
-			if( uint(num_metl*num_metl) > uint(1 + (ore.val/5000000)) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -1549,9 +1544,9 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.yard);
 			return true;
 		}
-
+		
 		//might be allowed limited number of these
-		uint limit = slots_total < 9 ? 0 : 1;
+		uint limit = slots_total < 14 ? 0 : 1;
 		if( pl.getStructureCount(bld_crgo) > limit ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
@@ -1561,23 +1556,23 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.fuel);
 			return true;
 		}
-
-
+		
+		
 		float num_port = pl.getStructureCount(bld_port);
 		float num_farm = pl.getStructureCount(bld_farm);
-
+		
 		if( num_port > 1 ) {
 			float avail_export = num_port * rate_port;
 			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
 			total_export += (num_metl * rate_metl);
 			total_export += (num_farm * rate_food);
-
+			
 			if( total_export < avail_export - rate_port ) {
 				pl.removeStructure(oloc.port);
 				return true;
 			}
 		}
-
+		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
@@ -1586,8 +1581,8 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.city);
 			return true;
 		}
-
-
+		
+		
 		// Handle overworked population (maybe needs more considerations)
 		if( pop_max < pop_wreq ) {
 			if( pl.getStructureCount(bld_fuel) > 1 ) {
@@ -1634,17 +1629,17 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
 				return true;
 			}
 		}
-
+		
 		float num_metl = pl.getStructureCount(bld_metl);
 		float num_farm = pl.getStructureCount(bld_farm);
 		float num_port = pl.getStructureCount(bld_port);
-
+		
 		float avail_export = num_port * rate_port;
 		float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
 		total_export += (num_farm * rate_food);
@@ -1654,13 +1649,15 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			pl.buildStructure(bld_port);
 			return true;
 		}
-
-		if( ore.val > 0 && uint(num_metl) < uint(num_farm/2)
-				&& uint(num_metl*num_metl) < uint(1 + (ore.val/2500000)) ) {
+		
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor(num_farm/2)
+				&& pow(num_metl,2) < ceil(ore.val/5000000)
+				) {
 			pl.buildStructure(bld_metl);
 			return true;
 		}
-
+		
 		pl.buildStructure(bld_farm);
 		return true;
 	}
