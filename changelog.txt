@@ -16,4 +16,20 @@ v0.3.0
 	- will only tear down player built ammo depots when not enough metal produced locally
 	- no longer builds cargo bays
 	- only allow single player built cargo bay to remain on planets with 14+ slots
+	ammo depot:
+	- cost to produce ammo is now static
+	- mass now directly tied to construction cost
+	- storage capacity reduced slightly
+	- labor cost no longer static
+v0.4.0
+	mine teardown loops fixed on Farming/Res gov
+	farming gov rebalanced and tested
+	- added to ai allowed list
+	- only allow single player built cargo bay to remain on planets with 14+ slots
+	- only tear down player built fuel depots when not enough food produced locally
+	fuel depot:
+	- cost to produce fuel is now static
+	- mass now directly tied to construction cost
+	- storage capacity reduced slightly
+	- labor cost no longer static
 
