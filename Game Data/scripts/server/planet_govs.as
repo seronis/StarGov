@@ -630,20 +630,20 @@ bool gov_rebuilder(Planet@ pl, Empire@ emp) {
 	float rate_fuel, rate_ammo;
 	
 	bldVals rlvl, olvl, oloc;
-
+	
 	popTechLvls( emp, rlvl );
-
+	
 	analyzePlanet( pl, emp, pop_max, pop_wreq, pop_city, pop_bnkr,
-
+		
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
 		rate_fuel, rate_ammo,
-
+		
 		rlvl, olvl, oloc,
-
+		
 		fact_WorkRate
 		);
-
+	
 	if( rlvl.port > 0 + olvl.port ) {
 		pl.rebuildStructure(oloc.port);
 	}
@@ -652,9 +652,6 @@ bool gov_rebuilder(Planet@ pl, Empire@ emp) {
 	}
 	if( rlvl.city > 0 + olvl.city ) {
 		pl.rebuildStructure(oloc.city);
-	}
-	if( rlvl.scif > 0 + olvl.scif ) {
-		pl.rebuildStructure(oloc.scif);
 	}
 	if( rlvl.farm > 0 + olvl.farm ) {
 		pl.rebuildStructure(oloc.farm);
@@ -670,6 +667,9 @@ bool gov_rebuilder(Planet@ pl, Empire@ emp) {
 	}
 	if( rlvl.crgo > 0 + olvl.crgo ) {
 		pl.rebuildStructure(oloc.crgo);
+	}
+	if( rlvl.scif > 0 + olvl.scif ) {
+		pl.rebuildStructure(oloc.scif);
 	}
 	
 	int structCount = pl.getStructureCount();
