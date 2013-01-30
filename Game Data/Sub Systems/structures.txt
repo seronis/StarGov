@@ -590,22 +590,23 @@ System: FuelDepot
 	Level: Techs.Chemistry.Level
 	Size: Scale
 	Durability: 500 * Size * pow(LEVEL_GAIN_CURVE, Level)
-	Mass: 400 * Size * pow(LEVEL_GAIN_CURVE, Level)
+	Mass: 350 * Size * pow(COST_INC_CRV, Level)
 	
 	Tags: Structure
 	Tied To: Chemistry 1
 	
-	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[80 * Size * pow(COST_INC_CRV, Level)], AdvParts[80 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size]
+	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[80 * Size * pow(COST_INC_CRV, Level)], AdvParts[70 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size * pow(LEVEL_GAIN_CURVE, Level)]
 	Complexity: 1
 	
 	vWorkers: Size * 600000
+	vRate: Size * 20 * pow(LEVEL_GAIN_CURVE, Level)
 
 	Provides: MakeBioFuel with
-		Rate[Size * 20 * pow(LEVEL_GAIN_CURVE, Level)],
-		FoodCostPer[0.2*decay(Level,5)]
+		Rate[vRate],
+		FoodCostPer[0.1]
 	
 	Provides: FuelStorage with
-		Amount[Size * 750 * pow(LEVEL_GAIN_CURVE, Level)]
+		Amount[vRate * 20 * pow(LEVEL_GAIN_CURVE, Level)]
 	
 	Requires:
 		To Run:
