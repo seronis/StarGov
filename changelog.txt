@@ -9,4 +9,11 @@ v0.2.0
 	all govs compile clean
 	econonic gov rebalanced and tested
 	clickable starvation alerts
+v0.3.0
+	metal mining gov rebalanced and tested
+	- no longer allows fuel depots to remain
+	- no longer builds ammo depots
+	- will only tear down player built ammo depots when not enough metal produced locally
+	- no longer builds cargo bays
+	- only allow single player built cargo bay to remain on planets with 14+ slots
 
