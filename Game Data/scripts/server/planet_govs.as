@@ -276,9 +276,6 @@ bool onGovEvent(Planet@ pl) {
 
 		if(gov == "rebuilder")
 			return gov_rebuilder(pl, emp);
-
-		if(gov == "agrarian")
-			return gov_agrarian(pl, emp);
 		
 		if(gov == "elecworld")
 			return gov_elecworld(pl, emp);
@@ -297,6 +294,8 @@ bool onGovEvent(Planet@ pl) {
 		return gov_metalworld(pl, emp);
 	if(gov == "resworld")
 		return gov_resworld(pl, emp);
+	if(gov == "agrarian")
+		return gov_agrarian(pl, emp);
 
 	return false; // default back to XML based gov when no scripted alternative available
 }
@@ -1557,15 +1556,24 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
+		float num_farm = pl.getStructureCount(bld_farm);
+		float num_fuel = pl.getStructureCount(bld_fuel);
+		float fud_fuel = rate_fuel * num_fuel * 0.1;
+		
+		if( fud_fuel > (num_farm*rate_food) ) {
+			pl.removeStructure(oloc.fuel);
+			return true;
+		}
+		
 		
 		float num_port = pl.getStructureCount(bld_port);
-		float num_farm = pl.getStructureCount(bld_farm);
 		
 		if( num_port > 1 ) {
 			float avail_export = num_port * rate_port;
 			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
 			total_export += (num_metl * rate_metl);
 			total_export += (num_farm * rate_food);
+		//	total_export += (num_fuel * rate_fuel); //TODO: add fuel transport to G.Bank
 			
 			if( total_export < avail_export - rate_port ) {
 				pl.removeStructure(oloc.port);
