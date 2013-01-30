@@ -277,12 +277,8 @@ bool onGovEvent(Planet@ pl) {
 		if(gov == "rebuilder")
 			return gov_rebuilder(pl, emp);
 
-		if(gov == "resworld")
-			return gov_resworld(pl, emp);
 		if(gov == "agrarian")
 			return gov_agrarian(pl, emp);
-		if(gov == "metalworld")
-			return gov_metalworld(pl, emp);
 		
 		if(gov == "elecworld")
 			return gov_elecworld(pl, emp);
@@ -297,6 +293,10 @@ bool onGovEvent(Planet@ pl) {
 	//NOTE: below this point only governors that are AI aware
 	if(gov == "economic")
 		return gov_economic(pl, emp);
+	if(gov == "metalworld")
+		return gov_metalworld(pl, emp);
+	if(gov == "resworld")
+		return gov_resworld(pl, emp);
 
 	return false; // default back to XML based gov when no scripted alternative available
 }
@@ -1294,7 +1294,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		} else {
-			if( uint(num_metl*num_metl) > uint(1 + (ore.val/5000000)) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -1338,7 +1338,7 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 		}
 		
 		//might be allowed limited number of these
-		uint limit = slots_total < 9 ? 0 : 1;
+		uint limit = slots_total < 14 ? 0 : 1;
 		if( pl.getStructureCount(bld_crgo) > limit ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
@@ -1417,16 +1417,9 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
-				return true;
-			}
-		}
-		if( slots_total > 12 ) {
-			if( pl.getStructureCount(bld_crgo) < 1 ) {
-				pl.buildStructure(bld_crgo);
 				return true;
 			}
 		}
@@ -1454,8 +1447,10 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		if( ore.val > 0 && uint(num_metl) < uint(pl.getStructureCount(bld_scif)/2)
-				&& uint(num_metl*num_metl) < uint(1 + (ore.val/5000000)) ) {
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor(pl.getStructureCount(bld_scif)/2)
+				&& pow(num_metl,2) < ceil(ore.val/5000000)
+				) {
 			pl.buildStructure(bld_metl);
 			return true;
 		}
@@ -1514,7 +1509,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		} else {
-			if( uint(num_metl*num_metl) > uint(1 + (ore.val/5000000)) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -1551,7 +1546,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 		}
 		
 		//might be allowed limited number of these
-		uint limit = slots_total < 9 ? 0 : 1;
+		uint limit = slots_total < 14 ? 0 : 1;
 		if( pl.getStructureCount(bld_crgo) > limit ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
@@ -1634,7 +1629,7 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
 				return true;
@@ -1655,8 +1650,10 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		if( ore.val > 0 && uint(num_metl) < uint(num_farm/2)
-				&& uint(num_metl*num_metl) < uint(1 + (ore.val/2500000)) ) {
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor(num_farm/2)
+				&& pow(num_metl,2) < ceil(ore.val/5000000)
+				) {
 			pl.buildStructure(bld_metl);
 			return true;
 		}
