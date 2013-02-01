@@ -129,15 +129,15 @@ System: GoodsFactory
 	Description: #SS_GOODSFACT_DESC
 
 	Available: (Techs.Economics.Level > 0) && not(Traits.forever_indifferent)
-	Level: floor(Techs.Economics.Level)
+	Level: max(1,Techs.Economics.Level)
 	Size: Scale
 	Durability: 500 * Size * pow(LEVEL_GAIN_CURVE, Level)
-	Mass: 500 * Size * pow(LEVEL_GAIN_CURVE, Level)
+	Mass: 500 * Size * pow(COST_INC_CRV, Level)
 	
 	Tags: Structure
 	Tied To: Economics 1
 
-	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[75 * Size * pow(COST_INC_CRV, Level)], AdvParts[35 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size]
+	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[75 * Size * pow(COST_INC_CRV, Level)], AdvParts[50 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size]
 	Complexity: 5
 	
 	vWorkers: Size * 800000
@@ -157,15 +157,15 @@ System: LuxsFactory
 	Description: #SS_LUXSFACT_DESC
 
 	Available: (Techs.Economics.Level > 0) && not(Traits.forever_indifferent)
-	Level: floor(Techs.Economics.Level)
+	Level: max(1,Techs.Economics.Level)
 	Size: Scale
 	Durability: 500 * Size * pow(LEVEL_GAIN_CURVE, Level)
-	Mass: 500 * Size * pow(LEVEL_GAIN_CURVE, Level)
+	Mass: 500 * Size * pow(COST_INC_CRV, Level)
 	
 	Tags: Structure
 	Tied To: Economics 1
 
-	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[75 * Size * pow(COST_INC_CRV, Level)], AdvParts[35 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size]
+	Costs: Metals[200 * Size * pow(COST_INC_CRV, Level)], Electronics[75 * Size * pow(COST_INC_CRV, Level)], AdvParts[50 * Size * pow(COST_INC_CRV, Level)], Labr[BLDG_LABR_MULT * 5 * Size]
 	Complexity: 5
 	
 	vLuxFab: Size * 5 * pow(LEVEL_GAIN_CURVE, Level)
@@ -472,9 +472,9 @@ System: SpacePort
 	Description: #SS_SPACEPORT_DESC
 
 	Available: Techs.Economics.Level && not(Traits.no_bank)
-	Level: Techs.Economics.Level
-	econLevel: Techs.Economics.Level As Level
-	cargoLevel: Techs.Cargo.Level
+	Level: max(1,Techs.Economics.Level)
+	econLevel: max(1,Techs.Economics.Level)
+	cargoLevel: max(1,Techs.Cargo.Level)
 
 	Size: Scale
 	Durability: 500 * Size * pow(LEVEL_GAIN_CURVE, econLevel)
