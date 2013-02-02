@@ -4,6 +4,7 @@ const string@ strDisableCivilActs = "disable_civil_acts", strDoubleLabor = "doub
 const string@ actShortWorkWeek = "work_low", actForcedLabor = "work_forced";
 
 const string@ strAlertWReq = "plalert_wreq";
+const string@ strAdjTime_Guds = "t_GudLux_Adjusted";
 
 const double million = 1000000.0;
 
@@ -281,8 +282,6 @@ bool onGovEvent(Planet@ pl) {
 			return gov_elecworld(pl, emp);
 		if(gov == "advpartworld")
 			return gov_advpartworld(pl, emp);
-		if(gov == "luxworld")
-			return gov_luxworld(pl, emp);
 	} else
 		if( emp.getSetting("Difficulty") == 0 )
 			return false; //trivial AIs use xml govs
@@ -296,6 +295,8 @@ bool onGovEvent(Planet@ pl) {
 		return gov_resworld(pl, emp);
 	if(gov == "agrarian")
 		return gov_agrarian(pl, emp);
+	if(gov == "luxworld")
+		return gov_luxworld(pl, emp);
 	
 	return false; // default back to XML based gov when no scripted alternative available
 }
@@ -2194,7 +2195,7 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 				return true;
 			}
 		} else {
-			if( uint(num_metl*num_metl) > uint(1 + (ore.val/5000000)) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -2218,6 +2219,13 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
+		//might be allowed limited number of these
+		float limit = (slots_total<14)?0:1;
+		if( pl.getStructureCount(bld_crgo) > limit ) {
+			pl.removeStructure(oloc.crgo);
+			return true;
+		}
+		
 		//By the time we're this established we should have dedicated farm worlds
 		double val=0, inp=0, outp=0, demand=0;
 		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
@@ -2227,12 +2235,6 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 				pl.removeStructure(oloc.farm);
 				return true;
 			}
-		}
-		
-		//might be allowed limited number of these
-		if( pl.getStructureCount(bld_crgo) > 1 ) {
-			pl.removeStructure(oloc.crgo);
-			return true;
 		}
 		
 		float num_port = pl.getStructureCount(bld_port);
@@ -2277,10 +2279,57 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
+		float lastCheck = emp.getStat( strAdjTime_Guds );
+		float checkInterval = max(10,60 - (10 * gov_efficiency));
+		if( gameTime > (lastCheck + checkInterval) )
+		{
+			emp.getStatStats(strGoods, val, inp, outp, demand);
+			if( inp < outp || demand > 0 ) {
+				if( pl.getStructureCount(bld_luxr) > 0 )
+				{
+					pl.removeStructure(oloc.luxr);
+					pl.buildStructure(bld_good);
+					emp.setStat( strAdjTime_Guds, gameTime );
+				} else
+				if( pl.getStructureCount(bld_scif) > 0 )
+				{
+					pl.removeStructure(oloc.scif);
+					pl.buildStructure(bld_good);
+					emp.setStat( strAdjTime_Guds, gameTime );
+				} else
+				{
+					//TODO: issue warning to player
+				}
+			}
+			
+			emp.getStatStats(strLuxuries, val, inp, outp, demand);
+			if( inp < outp || demand > 0 ) {
+				if( pl.getStructureCount(bld_scif) > 0 )
+				{
+					pl.removeStructure(oloc.scif);
+					pl.buildStructure(bld_luxr);
+					emp.setStat( strAdjTime_Guds, gameTime );
+				} else
+				{
+					//TODO: issue warning to player
+				}
+			}
+			
+			//TODO: overproduction checks to convert factories into sci facilities
+		}
+		
 		
 		// Handle overworked population (maybe needs more considerations)
 		if( pop_max < pop_wreq ) {
+			if( pl.getStructureCount(bld_scif) > 0 ) {
+				pl.removeStructure(oloc.scif);
+				return true;
+			}
 			if( pl.getStructureCount(bld_farm) > 0 ) {
+				pl.removeStructure(oloc.farm);
+				return true;
+			}
+			if( pl.getStructureCount(bld_luxr) > 0 ) {
 				pl.removeStructure(oloc.farm);
 				return true;
 			}
@@ -2320,15 +2369,9 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
-				return true;
-			}
-		}
-		if( slots_total > 12 ) {
-			if( pl.getStructureCount(bld_crgo) < 1 ) {
-				pl.buildStructure(bld_crgo);
 				return true;
 			}
 		}
@@ -2344,17 +2387,6 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 			}
 		}
 		
-		emp.getStatStats(strGoods, val, inp, outp, demand);
-		if( inp < outp || demand > 0 ) {
-			pl.buildStructure(bld_good);
-			return true;
-		}
-		emp.getStatStats(strLuxuries, val, inp, outp, demand);
-		if( inp < outp || demand > 0 ) {
-			pl.buildStructure(bld_luxr);
-			return true;
-		}
-		
 		float num_metl = pl.getStructureCount(bld_metl);
 		float num_port = pl.getStructureCount(bld_port);
 		
@@ -2366,18 +2398,36 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 			pl.buildStructure(bld_port);
 			return true;
 		}
-		
 		if( uint(num_metl) > pl.getStructureCount(bld_city)) {
 			pl.buildStructure(bld_city);
 			return true;
 		}
-		if( ore.val > 0 && uint(num_metl) < uint(pl.getStructureCount(bld_scif)/2)
-				&& uint(num_metl*num_metl) < uint(1 + (ore.val/5000000)) ) {
+		float num_scif = pl.getStructureCount(bld_scif);
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor(num_scif/2)
+				&& pow(num_metl,2) < ceil(ore.val/5000000)
+				) {
 			pl.buildStructure(bld_metl);
 			return true;
 		}
 		
-		pl.buildStructure(bld_scif);
+		emp.getStatStats(strGoods, val, inp, outp, demand);
+		if( inp < outp || demand > 0 ) {
+			pl.buildStructure(bld_good);
+			return true;
+		}
+		emp.getStatStats(strLuxuries, val, inp, outp, demand);
+		if( inp < outp || demand > 0 ) {
+			pl.buildStructure(bld_luxr);
+			return true;
+		}
+		
+		if(num_scif < int(gov_efficiency)) {
+			pl.buildStructure(bld_scif);
+			return true;
+		}
+		
+		pl.buildStructure(bld_luxr);
 		return true;
 	}
 	
