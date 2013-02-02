@@ -2220,7 +2220,7 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 		}
 		
 		//might be allowed limited number of these
-		float limit = (slots_total<14)?0:1;
+		uint limit = (slots_total<14)?0:1;
 		if( pl.getStructureCount(bld_crgo) > limit ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
