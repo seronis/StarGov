@@ -2255,19 +2255,6 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		if( pl.getStructureCount(bld_scif) > 0 ) {
-			emp.getStatStats(strGoods, val, inp, outp, demand);
-			if( inp < outp || demand > 0 ) {
-				pl.removeStructure(oloc.scif);
-				return true;
-			}
-			emp.getStatStats(strLuxuries, val, inp, outp, demand);
-			if( inp < outp || demand > 0 ) {
-				pl.removeStructure(oloc.scif);
-				return true;
-			}
-		}
-		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
