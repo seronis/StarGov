@@ -32,4 +32,13 @@ v0.4.0
 	- mass now directly tied to construction cost
 	- storage capacity reduced slightly
 	- labor cost no longer static
+v0.5.0
+	luxuries gov updated
+	- mine teardown loop fixed
+	- efficiency determines :
+	-   max mines allowed
+	-   max sci facs allowed
+	-   reaction time for swapping buildings
+	- added to AI allow list
+	- cargobay behavior matches other govs
 
