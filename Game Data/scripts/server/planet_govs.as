@@ -297,6 +297,9 @@ bool onGovEvent(Planet@ pl) {
 		return gov_elecworld(pl, emp);
 	if(gov == "advpartworld")
 		return gov_advpartworld(pl, emp);
+		
+	if(gov == "shipworld")
+		return gov_shipworld(pl, emp);
 	
 	if(gov == "rebuilder")
 		return gov_rebuilder(pl, emp);
@@ -722,7 +725,7 @@ bool gov_testing(Planet@ pl, Empire@ emp) {
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
 	float slots_free = slots_total-slots_used;
-	if( slots_free < 1 ) {
+	if( slots_free < 2 ) {
 		//this section is for high priority building teardowns. Buildings that
 		//  are not valid at all for this governor. 
 	}
@@ -737,7 +740,7 @@ bool gov_testing(Planet@ pl, Empire@ emp) {
 		}
 		//we're still willing to renovate old buildings so no 'return' here.
 	} else
-	if( slots_used < slots_total ) {
+	if( slots_free > 0 ) {
 		
 		//before building anything else gaurentee we will have enough workers
 		float pop_buffer = 12000000;
@@ -1728,7 +1731,7 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		if( pl.getStructureCount(bld_fuel) > 0 ) {
-			pl.removeStructure(oloc.ammo);
+			pl.removeStructure(oloc.fuel);
 			return true;
 		}
 		if( pl.getStructureCount(bld_scif) > 0 ) {
@@ -1951,7 +1954,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		if( pl.getStructureCount(bld_fuel) > 0 ) {
-			pl.removeStructure(oloc.ammo);
+			pl.removeStructure(oloc.fuel);
 			return true;
 		}
 		if( pl.getStructureCount(bld_scif) > 0 ) {
