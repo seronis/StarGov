@@ -2430,7 +2430,7 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 	popTechLvls( emp, rlvl );
 	
 	analyzePlanet( pl, emp, pop_max, pop_wreq, pop_city, pop_bnkr,
-
+		
 		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
 		rate_luxr, rate_port, rate_gcap, rate_pcap,
 		rate_fuel, rate_ammo,
@@ -2440,33 +2440,53 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 		fact_WorkRate
 		);
 	
-	rlvl.print( pl.toObject().getName() + ": rlvl" );
-	olvl.print( pl.toObject().getName() + ": olvl" );
-	oloc.print( pl.toObject().getName() + ": oloc" );
-	
 	State@ ore = pl.toObject().getState(strOre);
 	State@ workers = pl.toObject().getState(strWorkers);
-	emp.postMessage(
-			"#c:green#Val:#c##c:white#"+workers.val+"#c# "
-		+	"#c:green#Max:#c##c:white#"+workers.max+"#c# "
-		+	"#c:green#Req:#c##c:white#"+workers.required+"#c# "
-		+	"#c:green#Cgo:#c##c:white#"+workers.inCargo+"#c# ");
 	bool offline = (workers.val < workers.required);
+	
+	uint gov_efficiency = getEfficiency(emp);
 	
 	float slots_total = pl.getMaxStructureCount();
 	float slots_used = pl.getStructureCount();
 	float slots_free = slots_total-slots_used;
+	
 	if( slots_free < 2 ) {
-		if( pl.getStructureCount(bld_good) > 0) {
+		float num_metl = pl.getStructureCount(bld_metl);
+		
+		//we allow limited mines so that ore reserves dont go to waste
+		if( ore.val <= 0 ) {
+			if( num_metl > 0 ) {
+				pl.removeStructure(oloc.metl);
+				return true;
+			}
+		} else {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) 
+				|| num_metl > int(gov_efficiency)
+				) {
+				pl.removeStructure(oloc.metl);
+				return true;
+			}
+		}
+		
+		if( pl.getStructureCount(bld_good) > 0 ) {
 			pl.removeStructure(oloc.good);
 			return true;
 		}
-		if( pl.getStructureCount(bld_luxr) > 0) {
+		if( pl.getStructureCount(bld_luxr) > 0 ) {
 			pl.removeStructure(oloc.luxr);
 			return true;
 		}
 		if( pl.getStructureCount(bld_scif) > 0 ) {
 			pl.removeStructure(oloc.scif);
+			return true;
+		}
+		
+		if( pl.getStructureCount(bld_advp) > 0 ) {
+			pl.removeStructure(oloc.advp);
+			return true;
+		}
+		if( pl.getStructureCount(bld_elec) > 0 ) {
+			pl.removeStructure(oloc.elec);
 			return true;
 		}
 		
@@ -2476,6 +2496,19 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 		}
 		if( pl.getStructureCount(bld_fuel) > 1 ) {
 			pl.removeStructure(oloc.fuel);
+			return true;
+		}
+		
+		float num_port = pl.getStructureCount(bld_port);
+		float avail_import = num_port * rate_port;
+		
+		float num_crgo = pl.getStructureCount(bld_crgo);
+		float cargo_rate = 7500 * pow(lvlcurve,rlvl.crgo);
+		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
+		float avail_cargo = num_crgo * cargo_rate;
+		
+		if( avail_cargo > avail_import - cargo_rate ) {
+			pl.removeStructure(oloc.crgo);
 			return true;
 		}
 		
