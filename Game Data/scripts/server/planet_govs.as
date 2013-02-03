@@ -271,23 +271,19 @@ bool onGovEvent(Planet@ pl) {
 	if( @bld_gcap is null ) init_consts();
 	
 	if( !emp.isAI() ) {
-		
 		if(gov == "testing")
 			return gov_testing(pl, emp);
-		
-		if(gov == "rebuilder")
-			return gov_rebuilder(pl, emp);
-		
-		if(gov == "elecworld")
-			return gov_elecworld(pl, emp);
-		if(gov == "advpartworld")
-			return gov_advpartworld(pl, emp);
-	} else
+	} else {
 		if( emp.getSetting("Difficulty") == 0 )
 			return false; //trivial AIs use xml govs
+		
+		//govs that dont apply to AIs
+		if(gov == "testing")
+			return gov_economic(pl, emp);
+	}
 	
 	//NOTE: below this point only governors that are AI aware
-	if(gov == "economic")
+	if(gov == "default" || gov == "economic")
 		return gov_economic(pl, emp);
 	if(gov == "metalworld")
 		return gov_metalworld(pl, emp);
@@ -297,6 +293,13 @@ bool onGovEvent(Planet@ pl) {
 		return gov_agrarian(pl, emp);
 	if(gov == "luxworld")
 		return gov_luxworld(pl, emp);
+	if(gov == "elecworld")
+		return gov_elecworld(pl, emp);
+	if(gov == "advpartworld")
+		return gov_advpartworld(pl, emp);
+	
+	if(gov == "rebuilder")
+		return gov_rebuilder(pl, emp);
 	
 	return false; // default back to XML based gov when no scripted alternative available
 }
@@ -1720,10 +1723,6 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.luxr);
 			return true;
 		}
-		if( pl.getStructureCount(bld_advp) > 0 ) {
-			pl.removeStructure(oloc.advp);
-			return true;
-		}
 		if( pl.getStructureCount(bld_ammo) > 0 ) {
 			pl.removeStructure(oloc.ammo);
 			return true;
@@ -1734,6 +1733,16 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 		}
 		if( pl.getStructureCount(bld_scif) > 0 ) {
 			pl.removeStructure(oloc.scif);
+			return true;
+		}
+		if( pl.getStructureCount(bld_advp) > 0 ) {
+			pl.removeStructure(oloc.advp);
+			return true;
+		}
+		
+		//might be allowed limited number of these
+		if( pl.getStructureCount(bld_crgo) > 0 && slots_total < 14 ) {
+			pl.removeStructure(oloc.crgo);
 			return true;
 		}
 		
@@ -1748,32 +1757,9 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 			}
 		}
 		
-		//might be allowed limited number of these
-		if( pl.getStructureCount(bld_crgo) > 1 ) {
-			pl.removeStructure(oloc.crgo);
-			return true;
-		}
-		
 		float num_port = pl.getStructureCount(bld_port);
 		float num_metl = pl.getStructureCount(bld_metl);
 		float num_elec = pl.getStructureCount(bld_elec);
-		
-		if( num_port > 1 ) {
-			float avail_export = num_port * rate_port;
-			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
-			total_export += (num_metl * rate_metl);
-			total_export -= (num_elec * rate_elec);
-			
-			if( total_export < avail_export - rate_port ) {
-				pl.removeStructure(oloc.port);
-				return true;
-			}
-		}
-		
-		if( pl.getStructureCount(bld_yard) > 0 ) {
-			pl.removeStructure(oloc.yard);
-			return true;
-		}
 		
 		float etomratio = (rate_metl / rate_elec) * 0.475;
 		if( num_elec > 0 ) {
@@ -1789,11 +1775,27 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 			}
 		}
 		
+		if( pl.getStructureCount(bld_yard) > 0 ) {
+			pl.removeStructure(oloc.yard);
+			return true;
+		}
+		
+		if( num_port > 1 ) {
+			float avail_export = num_port * rate_port;
+			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
+			total_export += (num_metl * rate_metl);
+			total_export -= (num_elec * rate_elec);
+			
+			if( total_export < avail_export - rate_port ) {
+				pl.removeStructure(oloc.port);
+				return true;
+			}
+		}
+		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
-		if( pl.getStructureCount(bld_city) > uint(num_metl) &&
-			pl.getStructureCount(bld_city) > uint(num_elec) && 
+		if( pl.getStructureCount(bld_city) > uint(num_metl+num_elec) && 
 			pl.getStructureCount(bld_city) > 1 && pop_max > pop_wreq + pop_buffer ) {
 			pl.removeStructure(oloc.city);
 			return true;
@@ -1844,15 +1846,9 @@ bool gov_elecworld(Planet@ pl, Empire@ emp) {
 		
 		//we have free slots. Build something helpful to our purpose
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
-				return true;
-			}
-		}
-		if( slots_total > 12 ) {
-			if( pl.getStructureCount(bld_crgo) < 1 ) {
-				pl.buildStructure(bld_crgo);
 				return true;
 			}
 		}
@@ -1975,7 +1971,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 		}
 		
 		//might be allowed limited number of these
-		if( pl.getStructureCount(bld_crgo) > 1 ) {
+		if( pl.getStructureCount(bld_crgo) > 0 && slots_total < 14 ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
 		}
@@ -1985,26 +1981,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 		float num_elec = pl.getStructureCount(bld_elec);
 		float num_advp = pl.getStructureCount(bld_advp);
 		
-		if( num_port > 1 ) {
-			float avail_export = num_port * rate_port;
-			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
-			float a_profit = (num_advp * rate_advp);
-			float e_profit = (num_elec * rate_elec) - a_profit;
-			float m_profit = (num_metl * rate_metl) - (a_profit*3 + e_profit*2);
-			total_export += (a_profit + e_profit + m_profit);
-			
-			if( total_export < avail_export - rate_port ) {
-				pl.removeStructure(oloc.port);
-				return true;
-			}
-		}
-		
-		if( pl.getStructureCount(bld_yard) > 0 ) {
-			pl.removeStructure(oloc.yard);
-			return true;
-		}
-		
-		float atoeratio = (rate_elec / rate_advp) * 0.975f;
+		float atoeratio = (rate_elec / rate_advp) * 0.975;
 		if( num_advp > 0 ) {
 			if( num_advp > atoeratio * num_elec ) {
 				pl.removeStructure(oloc.advp);
@@ -2025,11 +2002,29 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 			}
 		}
 		
+		if( pl.getStructureCount(bld_yard) > 0 ) {
+			pl.removeStructure(oloc.yard);
+			return true;
+		}
+		
+		if( num_port > 1 ) {
+			float avail_export = num_port * rate_port;
+			float total_export = pl.getStructureCount(bld_gcap) * rate_gcap;
+			float a_profit = (num_advp * rate_advp);
+			float e_profit = (num_elec * rate_elec) - a_profit;
+			float m_profit = (num_metl * rate_metl) - (a_profit*3 + e_profit*2);
+			total_export += (a_profit + e_profit + m_profit);
+			
+			if( total_export < avail_export - rate_port ) {
+				pl.removeStructure(oloc.port);
+				return true;
+			}
+		}
+		
 		//cities are almost the last thing we want to dismantle
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
-		if( pl.getStructureCount(bld_city) > uint(num_metl) &&
-			pl.getStructureCount(bld_city) > uint(num_elec) && 
+		if( pl.getStructureCount(bld_city) > uint(num_metl+num_elec+num_advp) &&
 			pl.getStructureCount(bld_city) > 1 && pop_max > pop_wreq + pop_buffer ) {
 			pl.removeStructure(oloc.city);
 			return true;
@@ -2080,15 +2075,9 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 		
 		//we have free slots. Build something helpful to our purpose
 		
-		if( slots_total - slots_used > 6 ) {
+		if( slots_free > 6 ) {
 			if( pl.getStructureCount(bld_yard) < 1 ) {
 				pl.buildStructure(bld_yard);
-				return true;
-			}
-		}
-		if( slots_total > 12 ) {
-			if( pl.getStructureCount(bld_crgo) < 1 ) {
-				pl.buildStructure(bld_crgo);
 				return true;
 			}
 		}
@@ -2124,7 +2113,7 @@ bool gov_advpartworld(Planet@ pl, Empire@ emp) {
 		
 		if( num_advp > 0 ) {
 			//we only use bonus cities after at least one advp factory has been built.
-			if( uint(num_advp) > pl.getStructureCount(bld_city) ) {
+			if( uint(num_advp+num_elec+num_metl) > pl.getStructureCount(bld_city) ) {
 				pl.buildStructure(bld_city);
 				return true;
 			}
