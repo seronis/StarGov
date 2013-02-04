@@ -2454,11 +2454,9 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 		float num_metl = pl.getStructureCount(bld_metl);
 		
 		//we allow limited mines so that ore reserves dont go to waste
-		if( ore.val <= 0 ) {
-			if( num_metl > 0 ) {
-				pl.removeStructure(oloc.metl);
-				return true;
-			}
+		if( num_metl > 0 ) if( ore.val <= 0 ) {
+			pl.removeStructure(oloc.metl);
+			return true;
 		} else {
 			if( pow(num_metl-1,2) > ceil(ore.val/5000000) 
 				|| num_metl > int(gov_efficiency)
@@ -2499,19 +2497,6 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		float num_port = pl.getStructureCount(bld_port);
-		float avail_import = num_port * rate_port;
-		
-		float num_crgo = pl.getStructureCount(bld_crgo);
-		float cargo_rate = 7500 * pow(lvlcurve,rlvl.crgo);
-		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
-		float avail_cargo = num_crgo * cargo_rate;
-		
-		if( avail_cargo > avail_import - cargo_rate ) {
-			pl.removeStructure(oloc.crgo);
-			return true;
-		}
-		
 		//By the time we're this established we should have dedicated farm worlds
 		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
 			double val=0, inp=0, outp=0, demand=0;
@@ -2521,6 +2506,64 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 				pl.removeStructure(oloc.farm);
 				return true;
 			}
+		}
+		
+		float num_port = pl.getStructureCount(bld_port);
+		float avail_import = num_port * rate_port;
+		
+		float num_crgo = pl.getStructureCount(bld_crgo);
+		float cargo_rate = 7500 * pow(lvlcurve,rlvl.crgo);
+		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
+		float avail_cargo = num_crgo * cargo_rate;
+		
+		if( avail_cargo > ((avail_import*2)-cargo_rate) ) {
+			pl.removeStructure(oloc.crgo);
+			return true;
+		}
+		
+		float num_yard = pl.getStructureCount(bld_yard);
+		if( num_yard > (total_slots/8) ) {
+			pl.removeStructure(oloc.yard);
+			return true;
+		}
+		
+		if( avail_import > (avail_cargo/2 + rate_port*1.5) ) {
+			pl.removeStructure(oloc.port);
+			return true;
+		}
+		
+		//cities are almost the last thing we want to dismantle
+		float pop_buffer = 12000000;
+		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
+		if( pl.getStructureCount(bld_city) > pl.getStructureCount(bld_metl) && 
+			pl.getStructureCount(bld_city) > 1 &&
+			(pop_max - pop_city) > (pop_wreq + pop_buffer)
+			) {
+			pl.removeStructure(oloc.city);
+			return true;
+		}
+		
+		
+		// Handle overworked population (maybe needs more considerations)
+		if( pop_max < pop_wreq ) {
+			if( pl.getStructureCount(bld_farm) > 0 ) {
+				pl.removeStructure(oloc.farm);
+				return true;
+			}
+			//If we get to this point then the player has built too many military
+			//	buildings for the number of cities. Check if we should alert them.
+			float gt = gameTime;
+			int ttime = realTime;
+			State@ lastWReqAlert = pl.toObject().getState(strAlertWReq);
+			if( ttime > lastWReqAlert.max &&
+				gt > (lastWReqAlert.val + 20.f)
+				){
+				Object@ obj = pl.toObject();
+			emp.postMessage("#c:red#ALERT:#c# Governor on #link:o"+obj.uid+"##c:green#"+obj.getName()+"#c##link# reports not enough workers available!");	
+				pl.toObject().setStateVals(strAlertWReq,gt,ttime,0,0);
+			}
+		} else {
+				pl.toObject().setStateVals(strAlertWReq,0,0,0,0);
 		}
 	}
 	
