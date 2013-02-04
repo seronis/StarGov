@@ -2606,6 +2606,15 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
+		if( pl.getStructureCount(bld_fuel) < 1 ) {
+			pl.buildStructure(bld_fuel);
+			return true;
+		
+		if( pl.getStructureCount(bld_ammo) < 1 ) {
+			pl.buildStructure(bld_ammo);
+			return true;
+		}
+		
 		//ore efficiency
 		float num_city = pl.getStructureCount(bld_city);
 		float num_metl = pl.getStructureCount(bld_metl);
