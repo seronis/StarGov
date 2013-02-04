@@ -46,4 +46,13 @@ v0.6.0
 	- added to AI allow list
 	- cargobay behavior matches other govs
 	- reprioritized port teardowns
+	Surplus metal mine considerations tweaked on all govs
+	New Shipyard gov:
+	- added to AI allow list
+	- Builds 1 fuel and ammo depot
+	- Builds 1 shipyard per 8 planet slots
+	- Builds mines based on efficiency rating
+	- maintains minimal cargo bays needed to manage max spaceport import rate each second
+	- uses all other slots for spaceports for maximum resource import from bank
+	Default ('balanced') gov now redirects to Economic gov
 
