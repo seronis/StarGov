@@ -2452,14 +2452,16 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 	
 	if( slots_free < 2 ) {
 		float num_metl = pl.getStructureCount(bld_metl);
+		float num_yard = pl.getStructureCount(bld_yard);
+		float num_port = pl.getStructureCount(bld_port);
 		
 		//we allow limited mines so that ore reserves dont go to waste
 		if( num_metl > 0 ) if( ore.val <= 0 ) {
 			pl.removeStructure(oloc.metl);
 			return true;
 		} else {
-			if( pow(num_metl-1,2) > ceil(ore.val/5000000) 
-				|| num_metl > int(gov_efficiency)
+			if( num_metl > int(gov_efficiency) ||
+				num_metl > ceil((num_port+num_yard)/2)
 				) {
 				pl.removeStructure(oloc.metl);
 				return true;
@@ -2508,7 +2510,6 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 			}
 		}
 		
-		float num_port = pl.getStructureCount(bld_port);
 		float avail_import = num_port * rate_port;
 		
 		float num_crgo = pl.getStructureCount(bld_crgo);
@@ -2516,13 +2517,12 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
 		float avail_cargo = num_crgo * cargo_rate;
 		
-		if( avail_cargo > ((avail_import*2)-cargo_rate) ) {
+		if( avail_cargo > ((avail_import*2)+cargo_rate) ) {
 			pl.removeStructure(oloc.crgo);
 			return true;
 		}
 		
-		float num_yard = pl.getStructureCount(bld_yard);
-		if( num_yard > (total_slots/8) ) {
+		if( num_yard > (slots_total/8) ) {
 			pl.removeStructure(oloc.yard);
 			return true;
 		}
@@ -2579,7 +2579,7 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 	} else
 	if( slots_free > 0 ) {
 		
-		//before building anything else gaurentee we will have enough workers
+		//minimal population requirements
 		float pop_buffer = 12000000;
 		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
 		if( pop_max < pop_wreq + pop_buffer) {
@@ -2587,7 +2587,53 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 			return true;
 		}
 		
-		//we have free slots. Build something helpful to our purpose
+		//minimal infrastructure
+		float num_port = pl.getStructureCount(bld_port);
+		if( num_port < 1 ) {
+			pl.buildStructure(bld_port);
+			return true;
+		}
+		
+		float num_crgo = pl.getStructureCount(bld_crgo);
+		if( num_crgo < 1 ) {
+			pl.buildStructure(bld_crgo);
+			return true;
+		}
+		
+		float num_yard = pl.getStructureCount(bld_yard);
+		if( num_yard < floor(slots_total/8) ) {
+			pl.buildStructure(bld_yard);
+			return true;
+		}
+		
+		//ore efficiency
+		float num_city = pl.getStructureCount(bld_city);
+		float num_metl = pl.getStructureCount(bld_metl);
+		if( num_city < num_metl && num_city < int(gov_efficiency) ) {
+			pl.buildStructure(bld_city);
+			return true;
+		}
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor((num_port+num_yard)/2)
+				) {
+			pl.buildStructure(bld_metl);
+			return true;
+		}
+		
+		
+		//primary purpose
+		float avail_import = num_port * rate_port;
+		float cargo_rate = 7500 * pow(lvlcurve,rlvl.crgo);
+		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
+		float avail_cargo = num_crgo * cargo_rate;
+		
+		if( avail_cargo < (avail_import*2) ) {
+			pl.buildStructure(bld_crgo);
+			return true;
+		}
+		
+		pl.buildStructure(bld_port);
+		return true;
 	}
 	
 	//all else fails.. RENOVATE
