@@ -1294,13 +1294,13 @@ bool gov_resworld(Planet@ pl, Empire@ emp) {
 		float num_metl = pl.getStructureCount(bld_metl);
 		
 		//we allow limited mines so that ore reserves dont go to waste
-		if( ore.val <= 0 ) {
-			if( num_metl > 0 ) {
-				pl.removeStructure(oloc.metl);
-				return true;
-			}
+		if( num_metl > 0 ) if( ore.val <= 0 ) {
+			pl.removeStructure(oloc.metl);
+			return true;
 		} else {
-			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) 
+				|| num_metl > int(gov_efficiency)
+				) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -1509,13 +1509,13 @@ bool gov_agrarian(Planet@ pl, Empire@ emp) {
 		float num_metl = pl.getStructureCount(bld_metl);
 		
 		//we allow limited mines so that ore reserves dont go to waste
-		if( ore.val <= 0 ) {
-			if( num_metl > 0 ) {
-				pl.removeStructure(oloc.metl);
-				return true;
-			}
+		if( num_metl > 0 ) if( ore.val <= 0 ) {
+			pl.removeStructure(oloc.metl);
+			return true;
 		} else {
-			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) 
+				|| num_metl > int(gov_efficiency)
+				) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
@@ -2181,13 +2181,13 @@ bool gov_luxworld(Planet@ pl, Empire@ emp) {
 		float num_metl = pl.getStructureCount(bld_metl);
 		
 		//we allow limited mines so that ore reserves dont go to waste
-		if( ore.val <= 0 ) {
-			if( num_metl > 0 ) {
-				pl.removeStructure(oloc.metl);
-				return true;
-			}
+		if( num_metl > 0 ) if( ore.val <= 0 ) {
+			pl.removeStructure(oloc.metl);
+			return true;
 		} else {
-			if( pow(num_metl-1,2) > ceil(ore.val/5000000) ) {
+			if( pow(num_metl-1,2) > ceil(ore.val/5000000) 
+				|| num_metl > int(gov_efficiency)
+				) {
 				pl.removeStructure(oloc.metl);
 				return true;
 			}
