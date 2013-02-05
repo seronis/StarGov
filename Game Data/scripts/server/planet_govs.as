@@ -77,6 +77,7 @@ void popTechLvls( Empire@ emp, bldVals &out rlvl ) {
 	rlvl.luxr = rlvl.port;
 	rlvl.fuel = max(1.00, emp.getStat(str_Chemistry));
 	rlvl.ammo = max(1.00, emp.getStat(str_ProjWeapons));
+	rlvl.bnkr = ceil(weight(emp.getStat(str_Sociology),0.3,emp.getStat(str_Armor),0.7));
 }
 
 const float tickPeriod = 30.0f;
@@ -392,7 +393,7 @@ void analyzePlanet( Planet@ pl, Empire@ emp,
 	
 	float pop_city_base = 20 * million * fact_PlanetSz;
 	pop_city = pop_city_base * pow(clvlcurve, rlvl.city) * fact_Housing;
-	pop_bnkr = pop_city * 0.3f;
+	pop_bnkr = pop_city_base * pow(clvlcurve, rlvl.bnkr) * fact_Housing * 0.3f;
 	
 	pop_max = 0
 		+ (pl.getStructureCount(bld_city) * pop_city)
@@ -2480,6 +2481,252 @@ bool gov_shipworld(Planet@ pl, Empire@ emp) {
 			pl.removeStructure(oloc.scif);
 			return true;
 		}
+		
+		if( pl.getStructureCount(bld_advp) > 0 ) {
+			pl.removeStructure(oloc.advp);
+			return true;
+		}
+		if( pl.getStructureCount(bld_elec) > 0 ) {
+			pl.removeStructure(oloc.elec);
+			return true;
+		}
+		
+		if( pl.getStructureCount(bld_ammo) > 1 ) {
+			pl.removeStructure(oloc.ammo);
+			return true;
+		}
+		if( pl.getStructureCount(bld_fuel) > 1 ) {
+			pl.removeStructure(oloc.fuel);
+			return true;
+		}
+		
+		//By the time we're this established we should have dedicated farm worlds
+		if( pl.getStructureCount(bld_farm) > 0 && emp.getStat("Planet") > 12 ) {
+			double val=0, inp=0, outp=0, demand=0;
+			emp.getStatStats(strFood, val, inp, outp, demand);
+			double npl = emp.getStat("Planet");
+			if( inp > outp && val > (npl * sqrt(rlvl.city) * 500) ) {
+				pl.removeStructure(oloc.farm);
+				return true;
+			}
+		}
+		
+		float avail_import = num_port * rate_port;
+		
+		float num_crgo = pl.getStructureCount(bld_crgo);
+		float cargo_rate = 7500 * pow(lvlcurve,rlvl.crgo);
+		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
+		float avail_cargo = num_crgo * cargo_rate;
+		
+		if( avail_cargo > ((avail_import*2)+cargo_rate) ) {
+			pl.removeStructure(oloc.crgo);
+			return true;
+		}
+		
+		if( num_yard > (slots_total/8) ) {
+			pl.removeStructure(oloc.yard);
+			return true;
+		}
+		
+		if( avail_import > (avail_cargo/2 + rate_port*1.5) ) {
+			pl.removeStructure(oloc.port);
+			return true;
+		}
+		
+		//cities are almost the last thing we want to dismantle
+		float pop_buffer = 12000000;
+		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
+		if( pl.getStructureCount(bld_city) > pl.getStructureCount(bld_metl) && 
+			pl.getStructureCount(bld_city) > 1 &&
+			(pop_max - pop_city) > (pop_wreq + pop_buffer)
+			) {
+			pl.removeStructure(oloc.city);
+			return true;
+		}
+		
+		
+		// Handle overworked population (maybe needs more considerations)
+		if( pop_max < pop_wreq ) {
+			if( pl.getStructureCount(bld_farm) > 0 ) {
+				pl.removeStructure(oloc.farm);
+				return true;
+			}
+			//If we get to this point then the player has built too many military
+			//	buildings for the number of cities. Check if we should alert them.
+			float gt = gameTime;
+			int ttime = realTime;
+			State@ lastWReqAlert = pl.toObject().getState(strAlertWReq);
+			if( ttime > lastWReqAlert.max &&
+				gt > (lastWReqAlert.val + 20.f)
+				){
+				Object@ obj = pl.toObject();
+			emp.postMessage("#c:red#ALERT:#c# Governor on #link:o"+obj.uid+"##c:green#"+obj.getName()+"#c##link# reports not enough workers available!");	
+				pl.toObject().setStateVals(strAlertWReq,gt,ttime,0,0);
+			}
+		} else {
+				pl.toObject().setStateVals(strAlertWReq,0,0,0,0);
+		}
+	}
+	
+	if( offline ) {
+		//if we have a building offline the only NEW buildings we will make are cities.
+		float pop_buffer = 12000000;
+		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
+		if( pop_max < pop_wreq + pop_buffer) {
+			pl.buildStructure(bld_city);
+			return true;
+		}
+		//we're still willing to renovate old buildings so no 'return' here.
+	} else
+	if( slots_free > 0 ) {
+		
+		//minimal population requirements
+		float pop_buffer = 12000000;
+		if( pl.hasCondition("ringworld_special") ) pop_buffer *= 10;
+		if( pop_max < pop_wreq + pop_buffer) {
+			pl.buildStructure(bld_city);
+			return true;
+		}
+		
+		//minimal infrastructure
+		float num_port = pl.getStructureCount(bld_port);
+		if( num_port < 1 ) {
+			pl.buildStructure(bld_port);
+			return true;
+		}
+		
+		float num_crgo = pl.getStructureCount(bld_crgo);
+		if( num_crgo < 1 ) {
+			pl.buildStructure(bld_crgo);
+			return true;
+		}
+		
+		float num_yard = pl.getStructureCount(bld_yard);
+		if( num_yard < floor(slots_total/8) ) {
+			pl.buildStructure(bld_yard);
+			return true;
+		}
+		
+		if( pl.getStructureCount(bld_fuel) < 1 ) {
+			pl.buildStructure(bld_fuel);
+			return true;
+		
+		if( pl.getStructureCount(bld_ammo) < 1 ) {
+			pl.buildStructure(bld_ammo);
+			return true;
+		}
+		
+		//ore efficiency
+		float num_city = pl.getStructureCount(bld_city);
+		float num_metl = pl.getStructureCount(bld_metl);
+		if( num_city < num_metl && num_city < int(gov_efficiency) ) {
+			pl.buildStructure(bld_city);
+			return true;
+		}
+		if( ore.val > 0 && num_metl < int(gov_efficiency)
+				&& num_metl < floor((num_port+num_yard)/2)
+				) {
+			pl.buildStructure(bld_metl);
+			return true;
+		}
+		
+		
+		//primary purpose
+		float avail_import = num_port * rate_port;
+		float cargo_rate = 7500 * pow(lvlcurve,rlvl.crgo);
+		if( pl.hasCondition("ringworld_special") ) cargo_rate *= 10;
+		float avail_cargo = num_crgo * cargo_rate;
+		
+		if( avail_cargo < (avail_import*2) ) {
+			pl.buildStructure(bld_crgo);
+			return true;
+		}
+		
+		pl.buildStructure(bld_port);
+		return true;
+	}
+	
+	//all else fails.. RENOVATE
+	int structCount = pl.getStructureCount();
+	for(int structIndex = 0 ; structIndex < structCount && pl.toObject().getConstructionQueueSize() < 3 ; ++structIndex)
+		pl.rebuildStructure(structIndex);
+	return true;
+}
+
+
+bool gov_forgeworld(Planet@ pl, Empire@ emp) {
+	float pop_max, pop_wreq, pop_city, pop_bnkr;
+	
+	float rate_metl, rate_elec, rate_advp, rate_food, rate_port;
+	float rate_good, rate_luxr, rate_gcap, rate_pcap, fact_WorkRate;
+	float rate_fuel, rate_ammo;
+	
+	bldVals rlvl, olvl, oloc;
+	
+	popTechLvls( emp, rlvl );
+	
+	analyzePlanet( pl, emp, pop_max, pop_wreq, pop_city, pop_bnkr,
+		
+		rate_metl, rate_elec, rate_advp, rate_food, rate_good, 
+		rate_luxr, rate_port, rate_gcap, rate_pcap,
+		rate_fuel, rate_ammo,
+		
+		rlvl, olvl, oloc,
+		
+		fact_WorkRate
+		);
+	
+	State@ ore = pl.toObject().getState(strOre);
+	State@ workers = pl.toObject().getState(strWorkers);
+	bool offline = (workers.val < workers.required);
+	
+	uint gov_efficiency = getEfficiency(emp);
+	
+	float slots_total = pl.getMaxStructureCount();
+	float slots_used = pl.getStructureCount();
+	float slots_free = slots_total-slots_used;
+	
+	if( slots_free < 2 ) {
+		//non critical for blockade survival
+		if( pl.getStructureCount(bld_scif) > 0 ) {
+			pl.removeStructure(oloc.scif);
+			return true;
+		}
+		if( pl.getStructureCount(bld_luxr) > 0 ) {
+			pl.removeStructure(oloc.luxr);
+			return true;
+		}
+		float max_guds = emp.hasTraitTag(strIndifferent)?0:1;
+		if( pl.getStructureCount(bld_good) > max_guds ) {
+			pl.removeStructure(oloc.good);
+			return true;
+		}
+		if( pl.getStructureCount(bld_crgo) > 1 ) {
+			pl.removeStructure(oloc.crgo);
+			return true;
+		}
+		if( pl.getStructureCount(bld_yard) > ceil(slots_total/10) ) {
+			pl.removeStructure(oloc.yard);
+			return true;
+		}
+		
+		float num_metl = pl.getStructureCount(bld_metl);
+		float num_yard = pl.getStructureCount(bld_yard);
+		float num_port = pl.getStructureCount(bld_port);
+		
+		//we allow limited mines so that ore reserves dont go to waste
+		if( num_metl > 0 ) if( ore.val <= 0 ) {
+			pl.removeStructure(oloc.metl);
+			return true;
+		} else {
+			if( num_metl > int(gov_efficiency) ||
+				num_metl > ceil((num_port+num_yard)/2)
+				) {
+				pl.removeStructure(oloc.metl);
+				return true;
+			}
+		}
+		
 		
 		if( pl.getStructureCount(bld_advp) > 0 ) {
 			pl.removeStructure(oloc.advp);

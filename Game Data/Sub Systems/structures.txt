@@ -215,7 +215,7 @@ System: Bunker
 	Description: #SS_BUNKER_DESC
 
 	Available: (Techs.Armor.Level > 6)
-	Level: ceil(weight(Techs.Armor.Level - 6, 0.5))
+	Level: ceil(weight(Techs.Armor.Level, 0.7, Techs.Sociology.Level,0.3))
 	Size: Scale
 	Durability: 1600 * Size * pow(LEVEL_GAIN_CURVE, Level) * GAME_ARMOR_MULT
 	Mass: 800 * Size * pow(LEVEL_GAIN_CURVE, Level)
